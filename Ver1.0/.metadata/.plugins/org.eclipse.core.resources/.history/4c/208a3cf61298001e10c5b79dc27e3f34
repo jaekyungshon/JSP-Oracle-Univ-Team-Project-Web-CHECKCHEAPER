@@ -1,0 +1,56 @@
+<%@ page language="java" contentType="text/html; charset=utf-8"
+    pageEncoding="utf-8"%>
+<%@ page import="java.util.*" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="checkCheaper.SellingGoods" %>
+<%@ include file="dbConn.jsp" %>
+<%
+String storeID = (String)session.getAttribute("userID");
+%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CheckCheaper</title>
+<!-- Bootstrap CDN -->
+<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-
+pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-
+xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+crossorigin="anonymous"></script>
+<!-- CSS -->
+<link rel="stylesheet" href="css/footer.css" type="text/css">
+<link rel="stylesheet" href="css/dash_section_input.css" type="text/css">
+</head>
+<body>
+	<%-- Navigation --%>
+	<%@ include file="menu.jsp" %>
+	<%-- Header --%>
+	<div class="jumbotron">
+		<div class="container">
+			<h1 class="display-2"><strong>Release to your selling goods!</strong></h1>
+		</div>
+	</div>
+	<%-- Header Section --%>
+	<div class="container">
+		<div class="container">
+			<div class="text-center">
+				<%
+				out.println("<h3>");
+				out.println("Hello, "+storeID+"! You can manage to your goods-inventory.");
+				out.println("</h3>");
+				%>
+				<br><br>
+			</div>
+		</div>
+	</div>
+	<%-- Section --%>
+	<hr>
+	<section>
+		
+	</section>
+</body>
+</html>

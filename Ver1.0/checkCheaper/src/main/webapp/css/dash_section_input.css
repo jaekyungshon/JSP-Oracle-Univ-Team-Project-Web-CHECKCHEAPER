@@ -1,0 +1,15 @@
+@charset "utf-8";
+
+#dashInputGroup {
+	display:flex;
+	justify-content:center;
+	width:100%;
+	padding-bottom: 20px;
+}
+
+#dashForm {
+	width : 800px;
+	border-radius: 5px;
+  	background-color: #bfb4b46b;
+  	padding: 20px;
+}

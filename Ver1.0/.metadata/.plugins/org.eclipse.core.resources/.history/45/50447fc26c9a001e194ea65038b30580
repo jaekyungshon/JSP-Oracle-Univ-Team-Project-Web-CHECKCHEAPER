@@ -1,0 +1,239 @@
+<%@ page language="java" contentType="text/html; charset=utf-8"
+    pageEncoding="utf-8"%>
+<%@ page import="java.util.*" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="checkCheaper.Goods" %>
+<%@ include file="dbConn.jsp" %>
+
+<%
+String userID = (String)session.getAttribute("userID");
+
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CheckCheaper</title>
+<!-- Bootstrap CDN -->
+<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-
+pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-
+xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+crossorigin="anonymous"></script>
+<!-- CSS -->
+<link rel="stylesheet" href="css/footer.css" type="text/css">
+<link rel="stylesheet" href="css/dash_section_input.css" type="text/css">
+</head>
+<body>
+	<%-- Navigation --%>
+	<%@ include file="menu.jsp" %>
+	<%-- Header --%>
+	<div class="jumbotron">
+		<div class="container">
+			<h1 class="display-2"><strong>Your Order History</strong></h1>
+		</div>
+	</div>
+	<%-- Header Section --%>
+	<div class="container">
+		<div class="container">
+			<div class="text-center">
+				<%
+				out.println("<h3>");
+				out.println("Hello, "+userID+"! You can check to your order history!");
+				out.println("</h3>");
+				%>
+				<br><br>
+			</div>
+		</div>
+	</div>
+	<hr>
+	<%-- Section --%>
+	<%
+		PreparedStatement pstmt = null;
+		String sql = "";
+		ResultSet rs = null;
+		
+		// 주문정보 join 배송 레코드 가져오기
+		sql="SELECT orderinfo.ORDR_ID, ORDR_PAY, ORDR_YMD, ORDR_ADDR, ORDR_TELNO, DELIVERY_YMD, DELIVERY_BZENT_NM "
+		   +"FROM orderinfo, delivery "
+		   +"WHERE orderinfo.ORDR_ID=delivery.ORDR_ID and MBR_ID=?";
+		pstmt=conn.prepareStatement(sql);
+		pstmt.setString(1,userID);
+		rs=pstmt.executeQuery();
+		ArrayList<String>[] orderInfo_join_delivery = new ArrayList[100];
+		String nameOneList[] = {"ORDR_ID","ORDR_PAY","ORDR_YMD","ORDR_ADDR","ORDR_TELNO","DELIVERY_YMD","DELIVERY_BZENT_NM"};
+		int cartCount=0; // 주문정보 레코드 개수
+		while(rs.next()){
+			ArrayList<String> tmp = new ArrayList<String>();
+			for(int i=0; i<nameOneList.length; i++)
+				tmp.add(rs.getString(nameOneList[i]));
+			orderInfo_join_delivery[cartCount++]=tmp;
+		}
+		System.out.println("주문정보 join 배송");
+		for(int i=0; i<cartCount; i++){
+			for(String e : orderInfo_join_delivery[i]){
+				System.out.print(e+" ");
+			}
+			System.out.println();
+		}
+		
+		// 주문상세 join 재고 join 상품
+		ArrayList<String>[] orderdetail_join_inventory_join_goods = new ArrayList[200];
+		String nameTwoList[] = {"ORDERDETAIL_ID","ORDERDETAIL_CNT","IVT_GDS_AMT","GDS_NM"};
+		int[] goodsCount=new int[cartCount]; // 각 주문 레코드의 주문상세 레코드 개수.
+		// [3,1,3,2,2]
+		for(int i=0; i<cartCount; i++){
+			goodsCount[i]=0;
+		}
+		// [[[메론,17000,3,51000], [건포도], [배추]], [[적상추]], [[아보카도, 건포도, 단감]]]
+		// [[메론,17000,3,51000],[건포도,487,5,2435],[배추],[적상추],[아보카도],...]
+		// 11/27: list[0] = {메론, 건포도, 배추} 0~3
+		// 11/30 : list[1] = {적상추}
+		// [2,0,0,0,0]
+		sql="SELECT ORDERDETAIL_ID, ORDERDETAIL_CNT, IVT_GDS_AMT, GDS_NM "
+		   +"FROM orderdetail, inventory, goods "
+		   +"WHERE ORDR_ID=? and orderdetail.IVT_ID=inventory.IVT_ID and inventory.GDS_ID=goods.GDS_ID";
+		pstmt=conn.prepareStatement(sql);
+		for(int i=0; i<cartCount; i++){
+			int ordr_id = Integer.parseInt(orderInfo_join_delivery[i].get(0));
+			pstmt.setInt(1, ordr_id);
+			rs=pstmt.executeQuery();
+			while(rs.next()){
+				ArrayList<String> tmp = new ArrayList<String>();
+				for(int j=0; j<nameTwoList.length; j++)
+					tmp.add(rs.getString(nameTwoList[j]));
+				int tmpIdx=0;
+				for(int j=0; j<=i; j++){
+					tmpIdx+=goodsCount[j];
+				}
+				orderdetail_join_inventory_join_goods[tmpIdx]=tmp;
+				goodsCount[i]=goodsCount[i]+1;
+			}
+		}
+		System.out.println("주문상세 join 재고 join 상품");
+		int tmpLen = 0;
+		for(int i=0; i<cartCount; i++) tmpLen+=goodsCount[i];
+		for(int i=0; i<tmpLen; i++){
+			for(String e : orderdetail_join_inventory_join_goods[i])
+				System.out.print(e+" ");
+			System.out.println("");
+		}
+		
+		//할인가 찾기 : 주문상세코드를 이용하여, ivt_id를 찾고, discount에서 할인가 검색.
+		sql = "SELECT * from orderdetail left outer join discount using(IVT_ID)";
+		pstmt=conn.prepareStatement(sql);
+		rs=pstmt.executeQuery();
+		int dcIdx=0;
+		while(rs.next()){
+			String e = rs.getString("DSCNT_AMT");
+			if(e==null) orderdetail_join_inventory_join_goods[dcIdx].add("0");
+			else orderdetail_join_inventory_join_goods[dcIdx].add(e);
+			dcIdx++;
+		}
+		
+		// 멤버십 할인가 찾기 : session userID를 이용하여 멤버십 테이블 접근
+		int membershipPrice = 0;
+		sql = "SELECT * from member, membership "
+			+ "WHERE member.MS_ID=membership.MS_ID and MBR_ID=?";
+		pstmt=conn.prepareStatement(sql);
+		pstmt.setString(1,userID);
+		rs=pstmt.executeQuery();
+		while(rs.next()){
+			membershipPrice = Integer.parseInt(rs.getString("MS_DSCNT_AMT"));
+		}
+	%>
+	<div class="container" id="wrap">
+		<div class="accordion" id="accordionExample">
+			<%-- 주문코드 개수에 맞게끔 Card 생성 --%>
+			<%
+			for(int i=0; i<cartCount; i++){
+			%>
+				<div class="card">
+					<%-- 주문일자 카드 제목 --%>
+					<div class="card-header" id="heading<%=i %>">
+						<h2 class="mb-0">
+							<button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse<%=i %>" aria-expanded="true" aria-controls="collapse<%=i %>">
+								<%=orderInfo_join_delivery[i].get(2) %>
+					        </button>
+						</h2>
+					</div>
+					<%-- 해당 주문명세서 출력 --%>
+					<div id="collapse<%=i %>" class="collapse show" aria-labelledby="heading<%=i %>" data-parent="#accordionExample">
+				      <div class="card-body">
+				        <table class="table" style="text-align:center;">
+				        	<thead class="thead-light">
+				        		<tr><th scope="col">주문코드</th><th scope="col" rowspan="2" colspan="3">주문명세서</th></tr>
+				        		<tr><td><%=orderInfo_join_delivery[i].get(0) %></td></tr>
+				        		<tr><th scope="col">주문일자</th><th scope="col">주문자 전화번호</th><th scope="col">수령지</th><th scope="col"></th></tr>
+				        		<tr><td><%=orderInfo_join_delivery[i].get(2) %></td><td><%=orderInfo_join_delivery[i].get(4) %></td><td><%=orderInfo_join_delivery[i].get(3) %></td></tr>
+				        		<tr><th scope="col" colspan="4">담당 배송업체</th></tr>
+				        		<tr><td colspan="4"><%=orderInfo_join_delivery[i].get(6) %></td></tr>
+				        	</thead>
+				        	<tbody class="thead-light">
+				        		<tr><th scope="col">품 목</th><th scope="col">단 가</th><th scope="col">수 량</th><th scope="col">가 격(단가*수량 - 할인가*수량)</th></tr>
+				        		<%
+				        		// 품목 출력을 위한 세팅
+				        		int start=0;
+				        		int end=0;
+				        		int fi_total_price=0;
+				        		// start 정하기
+				        		for(int j=0; j<i; j++){
+				        			start+=goodsCount[j];
+				        		}
+				        		// end 정하기
+				        		for(int j=0; j<=i; j++){
+				        			end+=goodsCount[j];
+				        		}
+				        		// 구매한 상품들 출력
+				        		for(int j=start; j<end; j++){
+				        			int tmpPrice=(Integer.parseInt(orderdetail_join_inventory_join_goods[j].get(2)) * Integer.parseInt(orderdetail_join_inventory_join_goods[j].get(1)));
+				        			int tmpDiscountPrice = Integer.parseInt(orderdetail_join_inventory_join_goods[j].get(4)) - Integer.parseInt(orderdetail_join_inventory_join_goods[j].get(1));
+				        			fi_total_price+=tmpPrice;
+				        			out.println("<tr>");
+				        			out.println("<td>"+orderdetail_join_inventory_join_goods[j].get(3)+"</td>"); // 품목
+				        			out.println("<td>"+orderdetail_join_inventory_join_goods[j].get(2)+"</td>"); // 단가
+				        			out.println("<td>"+orderdetail_join_inventory_join_goods[j].get(1)+"</td>"); // 수량
+				        			out.println("<td>"+String.format("%d-%d=%d원",tmpPrice,tmpDiscountPrice,tmpPrice-tmpDiscountPrice)+"</td>"); // 가격
+				        			out.println("/<tr>");
+				        		}
+				        		%>
+				        		<tr><th scope="col" colspan="2">합 계</th><td colspan="2"><%=fi_total_price %></td></tr>
+				        		<tr>
+				        			<th scope="col">결제수단</th>
+				        			<td>
+				        				<%
+				        				int pay = Integer.parseInt(orderInfo_join_delivery[i].get(1));
+				        				if(pay==0) out.println("현금");
+				        				else out.println("카드");
+				        				%>
+				        			</td>
+				        			<th scope="col">검수자(인)</th>
+				        			<td>운영자(ADMIN)</td>
+				        		</tr>
+				        	</tbody>
+				        </table>
+				      </div>
+				    </div>
+				</div>
+			<%	
+			}
+			%>
+		</div>
+	</div>
+</body>
+</html>
+<%
+if(rs!=null){
+	rs.close();
+}
+if(pstmt!=null){
+	pstmt.close();
+}
+if(conn!=null){
+	conn.close();
+}
+%>

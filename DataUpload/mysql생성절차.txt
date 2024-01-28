@@ -1,0 +1,21 @@
+[mysql 다운]
+경로: https://www.mysql.com/downloads/
+
+[mysql 필요 설치내용] - 제 컴퓨터 기준
+Server - MySQL Server 8.0.33
+Workbench - MySQL Workbench 8.0.33
+Connector(JDBC) - Connector/J 8.0.33
+
+* 추가 설정 필요
+Accounts and Roles에서 관리자 비밀번호 설정 필요.
+
+[cmd로 mysql 접속]
+1. mysql Server 다운 위치로 루트 변경 : (제 경로)C:\Program Files\MySQL\MySQL Server 8.0\bin
+2. mysql -u root -p 입력
+3. 설정한 관리자 비밀번호 입력.
+4. 접속됨.
+5. show DATABASES; (db 보기)
+6. use 사용할db;
+6-1. 초기에 생성해야함 -> create database 사용할db이름;
+7. select 등등 사용 가능.
+8. quit (종료)
